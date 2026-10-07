@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nordlys</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#02050D">
+<link rel="icon" href="assets/node-mint.svg" type="image/svg+xml">
+<style>
+@font-face { font-family: 'Manrope'; src: url(assets/fonts/Manrope.ttf) format('truetype'); font-weight: 200 800; font-display: swap; }
+:root { color-scheme: dark; --night: #02050D; --panel: #101B30; --panel-lo: #0B1426; --line2: rgba(170,200,235,0.19);
+  --text: #EDF2F9; --text2: #B3BED0; --dim: #8492A8; --mint: #7FDCB5; --red: #FF8A78; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--night); color: var(--text); font: 500 16px/1.55 'Manrope', system-ui, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased; display: grid; place-items: center; padding: 24px 16px; }
+.box { width: min(420px, 100%); background: var(--panel); border: 1px solid var(--line2); border-radius: 22px; padding: clamp(24px, 5vw, 36px); }
+.box img { height: 30px; display: block; }
+h1 { font-size: 22px; margin: 22px 0 6px; letter-spacing: -0.01em; }
+p { margin: 0; color: var(--text2); font-size: 15px; }
+label.f { display: block; font-weight: 700; margin: 20px 0 8px; }
+input[type=password] { width: 100%; font: inherit; color: var(--text); background: var(--panel-lo); border: 1px solid var(--line2); border-radius: 12px; padding: 12px 14px; }
+input[type=password]:focus { border-color: rgba(127,220,181,0.6); outline: none; box-shadow: 0 0 0 3px rgba(127,220,181,0.15); }
+.husk { display: flex; gap: 10px; align-items: center; margin-top: 14px; font-size: 14px; color: var(--text2); cursor: pointer; }
+.husk input { accent-color: var(--mint); width: 17px; height: 17px; margin: 0; }
+button { width: 100%; margin-top: 18px; min-height: 46px; border-radius: 23px; border: 0; cursor: pointer; font: 700 15px/1 'Manrope', sans-serif; background: var(--mint); color: #04130D; }
+button[disabled] { opacity: 0.6; cursor: default; }
+.err { color: var(--red); font-size: 14px; margin-top: 12px; min-height: 1.2em; }
+.wait { text-align: center; color: var(--dim); font-size: 15px; }
+</style>
+</head>
+<body>
+<p class="wait" id="vent" hidden>Åpner …</p>
+<form class="box" id="skjema" novalidate hidden>
+  <img src="assets/nordlys-wordmark-mint.svg" alt="Nordlys" width="113" height="30">
+  <h1>Skriv passkoden</h1>
+  <p>Siden er foreløpig bare for deltakerne i forprosjektet og de som er invitert.</p>
+  <label class="f" for="kode">Passkode</label>
+  <input type="password" id="kode" autocomplete="current-password" required>
+  <label class="husk"><input type="checkbox" id="husk" checked> Husk meg i denne nettleseren i 30 dager</label>
+  <button type="submit" id="send">Åpne siden</button>
+  <p class="err" id="err" role="alert"></p>
+</form>
+<script>
+(() => {
+  'use strict';
+  // Innholdet ligger i Supabase og gis bare ut av edge-funksjonen 'nettside' etter riktig passkode.
+  // Tokenet fra et riktig forsøk huskes i localStorage (30 dager) hvis «Husk meg» er valgt, ellers bare i fanen.
+  const FN = 'https://qwgtzrydzzkaiezyouxt.supabase.co/functions/v1/nettside';
+  const KEY = 'sb_publishable_gUJZpDFXutZiMKjKLcMO-g_lXaAz4m3';
+  const SKEY = 'nordlys-tilgang';
+  const $ = (id) => document.getElementById(id);
+  const lagre = {
+    hent() { for (const s of [localStorage, sessionStorage]) { try { const v = JSON.parse(s.getItem(SKEY) || 'null'); if (v && v.exp * 1000 > Date.now()) return v.token; s.removeItem(SKEY); } catch {} } return null; },
+    sett(token, exp, husk) { try { (husk ? localStorage : sessionStorage).setItem(SKEY, JSON.stringify({ token, exp })); } catch {} },
+    slett() { for (const s of [localStorage, sessionStorage]) { try { s.removeItem(SKEY); } catch {} } },
+  };
+
+  async function hent(body) {
+    const r = await fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + KEY }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    return { status: r.status, d };
+  }
+  function vis(d) {
+    window.NORDLYS_MEDIA = d.media || {};
+    window.NORDLYS_LOGOUT = () => { lagre.slett(); location.reload(); };
+    document.open();
+    document.write(d.html);
+    document.close();
+  }
+  function skjema(melding) {
+    $('vent').hidden = true; $('skjema').hidden = false;
+    $('err').textContent = melding || '';
+    $('kode').focus();
+  }
+
+  $('skjema').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const kode = $('kode').value;
+    if (!kode.trim()) return skjema('Skriv passkoden.');
+    $('send').disabled = true; $('err').textContent = '';
+    try {
+      const { status, d } = await hent({ kode });
+      if (status === 200 && d.ok) { lagre.sett(d.token, d.exp, $('husk').checked); vis(d); return; }
+      skjema(status === 429 ? 'For mange forsøk. Vent et minutt og prøv igjen.' : status === 401 ? 'Feil passkode.' : 'Noe gikk galt. Prøv igjen om litt.');
+    } catch { skjema('Fikk ikke kontakt. Sjekk nettforbindelsen og prøv igjen.'); }
+    $('send').disabled = false;
+  });
+
+  (async () => {
+    const token = lagre.hent();
+    if (!token) return skjema();
+    $('vent').hidden = false;
+    try {
+      const { status, d } = await hent({ token });
+      if (status === 200 && d.ok) { lagre.sett(d.token, d.exp, !!localStorage.getItem(SKEY)); vis(d); return; }
+      lagre.slett();
+    } catch {}
+    skjema();
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128" role="img" aria-label="Node (mint)"><title>Node (mint)</title>
+<defs>
+<radialGradient id="mint-pool" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#7FDCB5" stop-opacity="0.34"/><stop offset="0.25" stop-color="#7FDCB5" stop-opacity="0.14"/><stop offset="0.6" stop-color="#7FDCB5" stop-opacity="0.035"/><stop offset="1" stop-color="#7FDCB5" stop-opacity="0"/></radialGradient>
+<radialGradient id="mint-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#7FDCB5" stop-opacity="0.85"/><stop offset="0.25" stop-color="#7FDCB5" stop-opacity="0.36"/><stop offset="0.6" stop-color="#7FDCB5" stop-opacity="0.08"/><stop offset="1" stop-color="#7FDCB5" stop-opacity="0"/></radialGradient>
+<radialGradient id="mint-hot" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.35" stop-color="#FFFFFF" stop-opacity="0.7"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<linearGradient id="mint-beam" x1="0" y1="104" x2="0" y2="12" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7FDCB5" stop-opacity="0.5"/><stop offset="0.35" stop-color="#7FDCB5" stop-opacity="0.18"/><stop offset="1" stop-color="#7FDCB5" stop-opacity="0"/></linearGradient>
+<linearGradient id="mint-core" x1="0" y1="104" x2="0" y2="19.36" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/><stop offset="0.3" stop-color="#7FDCB5" stop-opacity="0.75"/><stop offset="1" stop-color="#7FDCB5" stop-opacity="0"/></linearGradient>
+</defs>
+<ellipse cx="48" cy="104" rx="44" ry="19.8" fill="url(#mint-pool)"/>
+<ellipse cx="48" cy="104" rx="28" ry="12.6" fill="none" stroke="#7FDCB5" stroke-opacity="0.5" stroke-width="1.4"/>
+<path d="M22 104Q41.5 67.19999999999999 48 12Q54.5 67.19999999999999 74 104Z" fill="url(#mint-beam)"/>
+<path d="M45.4 104L47.38 19.36L48.62 19.36L50.6 104Z" fill="url(#mint-core)"/>
+<circle cx="48" cy="104" r="18" fill="url(#mint-glow)"/>
+<circle cx="48" cy="104" r="6" fill="url(#mint-hot)"/>
+</svg>
