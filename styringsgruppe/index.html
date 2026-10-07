@@ -109,15 +109,18 @@ footer .wrap { padding-block: 24px 36px; }
       <p class="eyebrow">For styringsgruppen</p>
       <h1>Logg inn</h1>
       <form id="f-epost" novalidate>
-        <p>Skriv e-postadressen din, så sender vi en lenke for å logge inn. Siden er for deltakerne i forprosjektet, og bare adresser fra deres virksomheter har tilgang.</p>
+        <p>Skriv e-postadressen din, så sender vi en kode for å logge inn. Siden er for deltakerne i forprosjektet, og bare adresser fra deres virksomheter har tilgang.</p>
         <label for="epost">E-post</label>
         <input type="email" id="epost" autocomplete="email" required>
-        <button class="btn primary" type="submit" id="b-epost">Send lenke</button>
+        <button class="btn primary" type="submit" id="b-epost">Send kode</button>
       </form>
-      <div id="sendt" hidden>
+      <form id="sendt" novalidate hidden>
         <p id="sendt-til"></p>
+        <label for="kode">Kode fra e-posten</label>
+        <input class="code" id="kode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required>
+        <button class="btn primary" type="submit" id="b-kode">Logg inn</button>
         <button class="back" type="button" id="annen-epost">Bruk en annen e-post</button>
-      </div>
+      </form>
       <p class="err" id="err" role="alert"></p>
     </div>
   </div>
@@ -130,7 +133,8 @@ footer .wrap { padding-block: 24px 36px; }
 (() => {
   'use strict';
   // Innholdet ligger i Supabase (public.private_innhold) og kan bare leses av innloggede brukere på tilgangslisten.
-  // Innlogging med magisk lenke på e-post. Bare adresser på godkjente domener kan opprette bruker og lese (se migreringen).
+  // Innlogging med engangskode på e-post. Kode i stedet for lenke, fordi e-postskannere (Safe Links) åpner lenker
+  // og bruker opp engangstokenet før mottakeren rekker å klikke. Bare adresser på godkjente domener kan opprette bruker og lese (se migreringen).
   // Økten ligger i sessionStorage og forsvinner når fanen lukkes.
   const SB = 'https://qwgtzrydzzkaiezyouxt.supabase.co';
   const KEY = 'sb_publishable_gUJZpDFXutZiMKjKLcMO-g_lXaAz4m3';
@@ -159,13 +163,30 @@ footer .wrap { padding-block: 24px 36px; }
       if (r.status === 429) throw new Error('vent');
       // samme melding uansett om domenet er godkjent, så siden ikke røper hvem som har tilgang
       $('f-epost').hidden = true; $('sendt').hidden = false;
-      $('sendt-til').textContent = 'Hvis ' + epost + ' har tilgang, har vi sendt en lenke dit. Åpne den i denne nettleseren. Lenken gjelder en kort stund.';
-    } catch (x) { err(x.message === 'vent' ? 'Det er sendt mange lenker nå. Vent litt og prøv igjen.' : 'Vi fikk ikke sendt lenken. Prøv igjen om litt.'); }
+      $('sendt-til').textContent = 'Hvis ' + epost + ' har tilgang, har vi sendt en kode dit. Koden gjelder en kort stund.';
+      $('kode').value = ''; $('kode').focus();
+    } catch (x) { err(x.message === 'vent' ? 'Det er sendt mange koder nå. Vent litt og prøv igjen.' : 'Vi fikk ikke sendt koden. Prøv igjen om litt.'); }
     $('b-epost').disabled = false;
+  });
+  $('sendt').addEventListener('submit', async (e) => {
+    e.preventDefault(); err();
+    const kode = $('kode').value.replace(/\D/g, '');
+    if (kode.length < 6) return err('Skriv koden fra e-posten.');
+    $('b-kode').disabled = true;
+    try {
+      const r = await auth('verify', { type: 'email', email: epost, token: kode });
+      if (r.status === 429) { err('For mange forsøk. Vent litt og prøv igjen.'); return; }
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.access_token) { err('Koden stemmer ikke, eller den er utløpt. Sjekk koden eller be om en ny.'); return; }
+      const s = { token: d.access_token, epost: (d.user && d.user.email) || epost, utloper: Date.now() + (Number(d.expires_in) || 3600) * 1000 };
+      save(s);
+      await vis(s);
+    } catch { err('Fikk ikke kontakt. Prøv igjen om litt.'); }
+    finally { $('b-kode').disabled = false; }
   });
   $('annen-epost').addEventListener('click', () => { $('sendt').hidden = true; $('f-epost').hidden = false; err(); $('epost').focus(); });
 
-  // tilbake fra lenken: #access_token=...&expires_in=... eller #error=...
+  // eldre e-poster med lenke: tilbake fra lenken med #access_token=...&expires_in=... eller #error=...
   function fraLenke() {
     if (!location.hash || location.hash.length < 2) return null;
     const h = new URLSearchParams(location.hash.slice(1));
