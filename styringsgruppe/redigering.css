@@ -1,0 +1,220 @@
+/* Redigering for styringsgruppe-siden. Bruker fargetokens fra :root i index.html. Alle klasser starter med sgr-. */
+
+/* ---------- redaktørlinje ---------- */
+.sgr-linje { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 20px; padding: 10px 14px;
+  background: var(--panel-lo); border: 1px solid rgba(127,220,181,0.28); border-radius: 14px; font-size: 14px; }
+.sgr-linje-merke { font-size: 11.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mint); }
+.sgr-flex { flex: 1 1 auto; }
+.sgr-bryter { display: inline-flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 4px; background: none; border: 0; color: var(--text);
+  font: 600 14px/1.2 var(--f-text); cursor: pointer; text-align: left; }
+.sgr-spor { position: relative; flex: none; width: 38px; height: 22px; border-radius: 11px; background: var(--panel-hi); border: 1px solid var(--line2); transition: background .15s; }
+.sgr-spor::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--text2); transition: transform .15s, background .15s; }
+.sgr-bryter[aria-checked="true"] .sgr-spor { background: rgba(127,220,181,0.35); border-color: var(--mint); }
+.sgr-bryter[aria-checked="true"] .sgr-spor::after { transform: translateX(16px); background: var(--mint); }
+
+/* ---------- i visningen ---------- */
+.sgr-redigerbar { position: relative; }
+.sgr-penn { position: absolute; top: 6px; right: 6px; z-index: 2; width: 34px; height: 34px; display: grid; place-items: center; padding: 0;
+  border-radius: 50%; border: 1px solid var(--line2); background: var(--panel-hi); color: var(--text2); font: 600 16px/1 var(--f-text);
+  cursor: pointer; opacity: 0.75; transition: opacity .15s, color .15s, border-color .15s; }
+.sgr-redigerbar:hover > .sgr-penn, .sgr-penn:focus-visible { opacity: 1; color: var(--mint); border-color: rgba(127,220,181,0.5); }
+td.sgr-redigerbar > .sgr-penn { position: static; display: inline-grid; margin-left: 8px; vertical-align: middle; }
+.sg-verktoy:has(.sgr-vk) { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.sgr-vk { min-height: 36px; }
+.sgr-leser .sgr-penn, .sgr-leser .sgr-vk { display: none !important; }
+
+/* ---------- dialog ---------- */
+.sgr-dialog { width: min(640px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; margin: auto;
+  color: var(--text); background: var(--panel); border: 1px solid var(--line2); border-radius: 20px;
+  font: 500 15px/1.5 var(--f-text); box-shadow: 0 24px 80px rgba(0,0,0,0.55); overflow: hidden; }
+.sgr-dialog[open] { display: flex; flex-direction: column; }
+.sgr-dialog.sgr-stor { width: min(940px, calc(100vw - 32px)); }
+.sgr-dialog.sgr-veiviser { height: min(860px, calc(100dvh - 32px)); }
+.sgr-dialog::backdrop { background: rgba(2,5,13,0.72); backdrop-filter: blur(3px); }
+.sgr-hode { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px 14px 24px; border-bottom: 1px solid var(--line); }
+.sgr-hode h2 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.sgr-lukk { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--text2); font: 400 26px/1 var(--f-text); cursor: pointer; }
+.sgr-lukk:hover { background: var(--panel-hi); color: var(--text); }
+.sgr-kropp { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 20px 24px 24px; overscroll-behavior: contain; }
+.sgr-fot { display: flex; flex-direction: column; gap: 8px; padding: 14px 20px 16px 24px; border-top: 1px solid var(--line); background: var(--panel-lo); }
+.sgr-fot .sgr-status:empty { display: none; }
+.sgr-knapper { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sgr-status { font-size: 14px; color: var(--text2); margin: 0; }
+.sgr-status.sgr-feil, .sgr-feil { color: var(--red); }
+.sgr-laster { color: var(--dim); }
+.sgr-ingress { font-weight: 700; margin: 0 0 6px; }
+.sgr-hjelp { color: var(--dim); font-size: 13.5px; margin: 2px 0 0; }
+.sgr-dialog .btn.sgr-fare { background: var(--red); color: #1A0603; border-color: transparent; }
+.sgr-dialog .btn.sgr-fare-tekst { color: var(--red); border-color: rgba(255,138,120,0.35); }
+.sgr-dialog .btn.sgr-fare-tekst:hover { background: rgba(255,138,120,0.1); }
+.sgr-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.sgr-bekreft { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.sgr-bekreft p { margin: 0; font-weight: 700; }
+.sgr-varsel { margin-bottom: 18px; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(255,184,112,0.55); background: rgba(255,184,112,0.08); }
+.sgr-varsel p { margin: 0 0 10px; font-weight: 600; }
+
+/* ---------- felt ---------- */
+.sgr-skjema { display: grid; gap: 16px; }
+.sgr-felt { display: grid; gap: 6px; min-width: 0; }
+.sgr-felt > label, .sgr-etikett, .sgr-mini { font-weight: 700; font-size: 14px; color: var(--text); }
+.sgr-valgfri { font-weight: 500; color: var(--dim); }
+.sgr-dialog input[type=text], .sgr-dialog input[type=date], .sgr-dialog select, .sgr-dialog textarea {
+  width: 100%; min-width: 0; min-height: 44px; font: 500 15px/1.4 var(--f-text); color: var(--text); background: var(--panel-lo);
+  border: 1px solid var(--line2); border-radius: 10px; padding: 10px 12px; }
+.sgr-dialog textarea { resize: vertical; min-height: 44px; }
+.sgr-dialog select { appearance: none; padding-right: 36px; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text2) 50%), linear-gradient(135deg, var(--text2) 50%, transparent 50%);
+  background-position: right 17px center, right 12px center; background-size: 5px 5px; background-repeat: no-repeat; }
+.sgr-dialog input[type=date] { color-scheme: dark; }
+.sgr-dialog input:focus, .sgr-dialog select:focus, .sgr-dialog textarea:focus { border-color: rgba(127,220,181,0.6); outline: none; box-shadow: 0 0 0 3px rgba(127,220,181,0.15); }
+.sgr-dialog [aria-invalid="true"] { border-color: var(--red) !important; }
+.sgr-feilmelding { margin: 0; color: var(--red); font-size: 13.5px; font-weight: 600; }
+.sgr-sjekk { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-weight: 600; min-height: 32px; padding-top: 4px; }
+.sgr-sjekk input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--mint); cursor: pointer; }
+.sgr-sjekk > span { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.sgr-kode { font-family: ui-monospace, Consolas, monospace !important; font-size: 13.5px !important; }
+.sgr-rik-flate { min-height: 220px; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel-lo); }
+
+/* farger */
+select.sgr-v-gronn, .sgr-merke.sgr-v-gronn { border-left: 4px solid var(--mint) !important; }
+select.sgr-v-gul, .sgr-merke.sgr-v-gul { border-left: 4px solid var(--gold) !important; }
+select.sgr-v-rod, .sgr-merke.sgr-v-rod { border-left: 4px solid var(--red) !important; }
+select.sgr-v-ikke_satt, .sgr-merke.sgr-v-ikke_satt { border-left: 4px solid var(--faint) !important; }
+.sgr-prikk { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--faint); }
+.sgr-v-gronn .sgr-prikk, .sgr-prikk.sgr-v-gronn { background: var(--mint); }
+.sgr-v-gul .sgr-prikk, .sgr-prikk.sgr-v-gul { background: var(--gold); }
+.sgr-v-rod .sgr-prikk, .sgr-prikk.sgr-v-rod { background: var(--red); }
+.sgr-merke { display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px 3px 8px; border-radius: 8px; background: var(--panel-lo); font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.sgr-merke .sgr-prikk { display: none; }
+.sgr-forrige { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--dim); white-space: nowrap; }
+.sgr-forrige-ny { font-style: italic; }
+
+/* møtesnarveier i ✎-skjemaet */
+.sgr-ekstra { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+
+/* ---------- veiviser ---------- */
+.sgr-steg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; list-style: none; margin: 0; padding: 12px 20px 12px 24px; border-bottom: 1px solid var(--line); counter-reset: none; }
+.sgr-steg button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 4px 8px; border: 0; border-radius: 10px; background: none;
+  color: var(--dim); font: 600 13.5px/1.2 var(--f-text); text-align: left; cursor: pointer; }
+.sgr-steg button:hover:not([disabled]) { background: var(--panel-hi); color: var(--text); }
+.sgr-steg button[disabled] { cursor: default; opacity: 0.55; }
+.sgr-steg-nr { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--line2); font-size: 13px; font-weight: 700; }
+.sgr-steg .sgr-gjort .sgr-steg-nr { border-color: var(--mint); color: var(--mint); }
+.sgr-steg .sgr-naa button { color: var(--text); }
+.sgr-steg .sgr-naa .sgr-steg-nr { background: var(--mint); border-color: var(--mint); color: #04130D; }
+.sgr-stegtittel { font-size: 18px; font-weight: 700; margin: 0 0 14px; outline: none; }
+.sgr-rad3 { grid-template-columns: 180px minmax(0, 1fr) minmax(0, 1fr); }
+.sgr-rad2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.sgr-rad2 .sgr-bred, .sgr-rad2 .sgr-felt-sjekk { grid-column: 1 / -1; }
+.sgr-gruppe { margin: 24px 0 0; padding: 0; border: 0; min-width: 0; }
+.sgr-gruppe > legend { padding: 0; margin-bottom: 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+.sgr-gruppe > .btn, .sgr-gruppe > .sgr-skjema + .btn { margin-top: 12px; }
+.sgr-samlet { grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
+.sgr-samlet .sgr-forrige { margin-top: 2px; }
+
+.sgr-linjer { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 10px; }
+.sgr-linjerad { display: grid; grid-template-columns: minmax(0, 1.2fr) 200px minmax(0, 1.6fr) auto; gap: 10px; align-items: start;
+  padding: 10px 12px; border-radius: 12px; background: var(--panel-lo); border: 1px solid var(--line); }
+.sgr-linjerad > div { display: grid; gap: 4px; min-width: 0; }
+.sgr-linjerad .sgr-mini { font-size: 12.5px; color: var(--dim); font-weight: 700; }
+.sgr-farge-rad { display: grid; gap: 4px; }
+.sgr-linjerad textarea { min-height: 44px; }
+.sgr-c-fjern { align-self: center; padding-top: 18px; }
+.sgr-tekstknapp { background: none; border: 0; color: var(--text2); font: 600 13.5px/1 var(--f-text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 10px 6px; min-height: 40px; }
+.sgr-tekstknapp:hover { color: var(--red); }
+.sgr-linjer + .btn { margin-top: 12px; }
+
+.sgr-sakliste { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.sgr-sakliste > li { padding: 10px 14px; border-radius: 12px; background: var(--panel-lo); border: 1px solid var(--line); }
+.sgr-sakliste .sgr-tom { color: var(--dim); }
+.sgr-sak-tittel { font-weight: 700; color: var(--text); }
+
+.sgr-agenda { margin: 8px 0 12px; padding: 0; list-style: none; display: grid; gap: 6px; counter-reset: ag; }
+.sgr-agenda > li { counter-increment: ag; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 12px; border-radius: 12px; background: var(--panel-lo); border: 1px solid var(--line); }
+.sgr-agenda > li::before { content: counter(ag); flex: none; width: 22px; color: var(--dim); font-weight: 700; font-size: 13.5px; }
+.sgr-agenda > li.sgr-av { opacity: 0.6; }
+.sgr-agenda > li.sgr-av::before { content: '–'; }
+.sgr-agenda .sgr-sjekk, .sgr-ag-fritt { flex: 1 1 auto; min-width: 0; padding-top: 0; align-items: center; }
+.sgr-ag-fritt { display: flex; gap: 10px; }
+.sgr-ag-fritt input[type=checkbox] { flex: none; width: 20px; height: 20px; accent-color: var(--mint); }
+.sgr-ag-knapper { display: flex; align-items: center; gap: 4px; flex: none; margin-left: auto; }
+.sgr-ikon { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line2); background: transparent; color: var(--text); font: 600 17px/1 var(--f-text); cursor: pointer; }
+.sgr-ikon:hover:not([disabled]) { background: var(--panel-hi); }
+.sgr-ikon[disabled] { opacity: 0.3; cursor: default; }
+
+.sgr-oppsummering { margin-top: 12px; padding: 20px 22px; border-radius: 16px; background: var(--night); border: 1px solid var(--line2); display: grid; gap: 6px; }
+.sgr-oppsummering h4 { margin: 2px 0 8px; font-size: 22px; letter-spacing: -0.01em; }
+.sgr-oppsummering h5 { margin: 16px 0 4px; font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.sgr-opp-dato { color: var(--mint); font-weight: 700; font-size: 14px; }
+.sgr-opp-samlet { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; color: var(--text2); }
+.sgr-opp-status { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sgr-opp-status li { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 2px 12px; align-items: baseline; }
+.sgr-opp-status .sgr-hjelp { grid-column: 2; }
+.sgr-opp-navn { font-weight: 600; }
+.sgr-opp-agenda { margin: 0; padding-left: 22px; color: var(--text2); }
+.sgr-opp-sak { padding: 12px 14px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); display: grid; gap: 4px; color: var(--text2); font-size: 14.5px; }
+.sgr-opp-sak b { color: var(--text); }
+.sgr-stegflate > .sgr-knapper { margin-top: 16px; }
+
+/* ---------- avslutt møtet ---------- */
+.sgr-funnliste { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 12px; }
+.sgr-funn { padding: 14px 16px; border-radius: 14px; background: var(--panel-lo); border: 1px solid var(--line); display: grid; gap: 10px; }
+.sgr-funn.sgr-av, .sgr-funn.sgr-ferdig { opacity: 0.65; }
+.sgr-funn-hode { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.sgr-type { font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 9px; border-radius: 7px; }
+.sgr-type-vedtak { background: rgba(127,220,181,0.14); color: var(--mint); }
+.sgr-type-aksjon { background: rgba(245,197,66,0.14); color: var(--gold); }
+.sgr-ta-med { margin-left: auto; padding-top: 0; align-items: center; }
+.sgr-lagret { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--dim); }
+.sgr-sitat { margin: 0; padding-left: 12px; border-left: 2px solid var(--line2); color: var(--text2); font-size: 14px; overflow-wrap: anywhere; }
+
+/* ---------- historikk og hjelp ---------- */
+.sgr-historikk { list-style: none; margin: 0; padding: 0; }
+.sgr-historikk > li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.sgr-historikk > li:last-child { border-bottom: 0; }
+.sgr-hist-tekst { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.sgr-hist-tekst p { margin: 0; }
+.sgr-hist-tekst ul { margin: 4px 0 0; padding-left: 18px; color: var(--text2); font-size: 14px; }
+.sgr-hist-knapper { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.sgr-hist-knapper .sgr-bekreft { justify-content: flex-end; max-width: 260px; }
+.sgr-hist-knapper .sgr-bekreft p { font-size: 14px; }
+.sgr-hjelpeliste { margin: 0; padding-left: 22px; display: grid; gap: 12px; }
+.sgr-hjelpeliste li::marker { color: var(--mint); font-weight: 700; }
+
+/* ---------- melding ---------- */
+.sgr-toast { position: fixed; inset: auto auto 20px 50%; transform: translateX(-50%); margin: 0; z-index: 1000; max-width: calc(100vw - 32px);
+  padding: 12px 18px; border-radius: 12px; border: 1px solid rgba(127,220,181,0.5); background: var(--panel-hi); color: var(--text);
+  font: 600 14.5px/1.4 var(--f-text); box-shadow: 0 12px 40px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.sgr-toast.sgr-vis { opacity: 1; }
+.sgr-toast.sgr-toast-feil { border-color: rgba(255,138,120,0.6); }
+
+/* ---------- mobil ---------- */
+@media (max-width: 720px) {
+  .sgr-rad3, .sgr-rad2, .sgr-samlet { grid-template-columns: minmax(0, 1fr); }
+  .sgr-linjerad { grid-template-columns: minmax(0, 1fr) auto; }
+  .sgr-linjerad .sgr-c-navn { grid-column: 1; }
+  .sgr-linjerad .sgr-c-fjern { grid-column: 2; grid-row: 1; padding-top: 18px; }
+  .sgr-linjerad .sgr-c-farge, .sgr-linjerad .sgr-c-kom { grid-column: 1 / -1; }
+  .sgr-farge-rad { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+  .sgr-steg-navn { display: none; }
+  .sgr-steg .sgr-naa .sgr-steg-navn { display: inline; }
+  .sgr-steg { grid-template-columns: auto auto auto auto; justify-content: start; }
+  .sgr-historikk > li { flex-direction: column; gap: 8px; }
+  .sgr-hist-knapper { justify-content: flex-start; }
+  .sgr-hist-knapper .sgr-bekreft { justify-content: flex-start; max-width: none; }
+}
+@media (min-width: 721px) {
+  .sgr-linjer > li:not(:first-child) .sgr-mini { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .sgr-linjer > li:not(:first-child) .sgr-c-fjern { padding-top: 0; }
+}
+@media (max-width: 560px) {
+  .sgr-dialog, .sgr-dialog.sgr-stor { width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; border: 0; }
+  .sgr-hode { padding: 12px 12px 10px 16px; }
+  .sgr-kropp { padding: 16px; }
+  .sgr-fot { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .sgr-steg { padding: 8px 12px; }
+  .sgr-fot .sgr-knapper .btn { flex: 1 1 auto; }
+  .sgr-fot .sgr-knapper .sgr-flex { display: none; }
+  .sgr-linje { margin-top: 12px; }
+}

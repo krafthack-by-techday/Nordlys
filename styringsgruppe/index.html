@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nordlys – for styringsgruppen</title>
+<title>Nordlys (beta) – for styringsgruppen</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#02050D">
 <link rel="icon" href="../assets/node-mint.svg" type="image/svg+xml">
+<link rel="stylesheet" href="visning.css">
+<link rel="stylesheet" href="redigering.css">
 <style>
 @font-face { font-family: 'Manrope'; src: url(../assets/fonts/Manrope.ttf) format('truetype'); font-weight: 200 800; font-display: swap; }
 :root {
@@ -31,6 +33,8 @@ a { color: var(--mint); text-underline-offset: 3px; }
 header.top { position: sticky; top: 0; z-index: 20; background: rgba(2,5,13,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
 header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; }
 header.top img { height: 26px; display: block; }
+.logo-wrap { position: relative; display: inline-block; margin-left: 26px; }
+header.top .beta-ribbon, .beta-ribbon { position: absolute; top: -8px; left: -36px; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; color: var(--night); background: var(--gold); line-height: 1.3; padding: 2px 8px; border-radius: 3px; transform: rotate(-20deg); pointer-events: none; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
 header.top .who { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: var(--text2); }
 nav.toc { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-block: 0 10px; }
 nav.toc::-webkit-scrollbar { display: none; }
@@ -87,12 +91,15 @@ h3.area { font-size: 19px; font-weight: 700; margin-top: 34px; color: var(--mint
 .links { margin: 20px 0 0; padding-left: 18px; display: grid; gap: 8px; }
 footer { margin-top: 80px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
 footer .wrap { padding-block: 24px 36px; }
+body.sg-presenter header.top { display: none; }
+#innhold { --nn-verktoy-topp: 55px; }
+.sg-notat-topp { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 20px 12px; }
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap">
-    <img src="../assets/nordlys-wordmark-mint.svg" alt="Nordlys" width="98" height="26">
+    <span class="logo-wrap"><img src="../assets/nordlys-wordmark-mint.svg" alt="Nordlys" width="98" height="26"><span class="beta-ribbon" title="Siden er i beta">BETA</span></span>
     <div class="who" id="who" hidden><span id="who-email"></span><button class="btn small" type="button" id="logout">Logg ut</button></div>
   </div>
   <div class="wrap" id="toc-wrap" hidden>
@@ -125,113 +132,173 @@ footer .wrap { padding-block: 24px 36px; }
     </div>
   </div>
   <div class="wrap" id="innhold" hidden></div>
+  <div id="scene" hidden></div>
 </main>
 
-<footer id="foot" hidden><div class="wrap">Nordlys · forprosjekt 2026 · Internt for styringsgruppen. Ikke del innholdet videre. <span id="oppdatert"></span></div></footer>
+<footer id="foot" hidden><div class="wrap">Nordlys · forprosjekt 2026 · Internt for styringsgruppen. Ikke del innholdet videre.</div></footer>
 
-<script>
-(() => {
-  'use strict';
-  // Innholdet ligger i Supabase (public.private_innhold) og kan bare leses av innloggede brukere på tilgangslisten.
-  // Innlogging med engangskode på e-post. Kode i stedet for lenke, fordi e-postskannere (Safe Links) åpner lenker
-  // og bruker opp engangstokenet før mottakeren rekker å klikke. Bare adresser på godkjente domener kan opprette bruker og lese (se migreringen).
-  // Økten ligger i sessionStorage og forsvinner når fanen lukkes.
-  const SB = 'https://qwgtzrydzzkaiezyouxt.supabase.co';
-  const KEY = 'sb_publishable_gUJZpDFXutZiMKjKLcMO-g_lXaAz4m3';
-  const SKEY = 'nordlys-styringsgruppe-okt';
-  const $ = (id) => document.getElementById(id);
-  const err = (m) => { $('err').textContent = m || ''; };
-  let epost = '';
+<script type="module">
+// Skall for styringsgruppe-siden: innlogging med engangskode, ruter og lasting av modulene.
+// Kode i visning.js, presentasjon.js, redigering.js og notat.js.
+// Innlogging med kode i stedet for lenke, fordi e-postskannere (Safe Links) åpner lenker og bruker opp engangstokenet.
+import { SB, KEY, okt, lagreOkt, slettOkt, erRedaktor, glemRolle, token, hent, TilgangFeil } from './api.js';
 
-  const auth = (path, body, token) => fetch(SB + '/auth/v1/' + path, {
-    method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
+const $ = (id) => document.getElementById(id);
+const err = (m) => { $('err').textContent = m || ''; };
+let epost = '';
+
+const auth = (path, body, tok) => fetch(SB + '/auth/v1/' + path, {
+  method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json', ...(tok ? { Authorization: 'Bearer ' + tok } : {}) },
+  body: body ? JSON.stringify(body) : undefined,
+});
+
+$('f-epost').addEventListener('submit', async (e) => {
+  e.preventDefault(); err();
+  epost = $('epost').value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(epost)) return err('Sjekk e-postadressen.');
+  $('b-epost').disabled = true;
+  try {
+    const r = await auth('otp', { email: epost, create_user: true });
+    if (r.status === 429) throw new Error('vent');
+    // samme melding uansett om domenet er godkjent, så siden ikke røper hvem som har tilgang
+    $('f-epost').hidden = true; $('sendt').hidden = false;
+    $('sendt-til').textContent = 'Hvis ' + epost + ' har tilgang, har vi sendt en kode dit. Koden gjelder en kort stund.';
+    $('kode').value = ''; $('kode').focus();
+  } catch (x) { err(x.message === 'vent' ? 'Det er sendt mange koder nå. Vent litt og prøv igjen.' : 'Vi fikk ikke sendt koden. Prøv igjen om litt.'); }
+  $('b-epost').disabled = false;
+});
+$('sendt').addEventListener('submit', async (e) => {
+  e.preventDefault(); err();
+  const kode = $('kode').value.replace(/\D/g, '');
+  if (kode.length < 6) return err('Skriv koden fra e-posten.');
+  $('b-kode').disabled = true;
+  try {
+    const r = await auth('verify', { type: 'email', email: epost, token: kode });
+    if (r.status === 429) { err('For mange forsøk. Vent litt og prøv igjen.'); return; }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.access_token) { err('Koden stemmer ikke, eller den er utløpt. Sjekk koden eller be om en ny.'); return; }
+    lagreOkt({ token: d.access_token, refresh: d.refresh_token, epost: (d.user && d.user.email) || epost, utloper: Date.now() + (Number(d.expires_in) || 3600) * 1000 });
+    await start();
+  } catch { err('Fikk ikke kontakt. Prøv igjen om litt.'); }
+  finally { $('b-kode').disabled = false; }
+});
+$('annen-epost').addEventListener('click', () => { $('sendt').hidden = true; $('f-epost').hidden = false; err(); $('epost').focus(); });
+
+async function loggUt(melding) {
+  const s = okt();
+  slettOkt(); glemRolle();
+  if (s) { try { await auth('logout', null, s.token); } catch {} }
+  if (location.hash) history.replaceState(null, '', location.pathname);
+  visInnlogging(melding);
+}
+$('logout').addEventListener('click', () => loggUt());
+
+function visInnlogging(melding) {
+  for (const id of ['innhold', 'scene', 'who', 'toc-wrap', 'foot']) $(id).hidden = true;
+  $('innhold').replaceChildren(); $('scene').replaceChildren();
+  document.body.classList.remove('sg-presenter');
+  $('login').hidden = false; $('sendt').hidden = true; $('f-epost').hidden = false;
+  err(melding);
+}
+
+let seSomLeser = false;
+try { seSomLeser = sessionStorage.getItem('sg-se-som-leser') === '1'; } catch {}
+window.addEventListener('sg:seSomLeser', (e) => {
+  seSomLeser = !!e.detail;
+  try { sessionStorage.setItem('sg-se-som-leser', seSomLeser ? '1' : '0'); } catch {}
+  rute();
+});
+
+let notat = null;
+function lastNotat() {
+  if (window.NordlysNotat) return Promise.resolve(window.NordlysNotat);
+  return new Promise((ok, feil) => {
+    const s = document.createElement('script');
+    s.src = './notat.js'; s.onload = () => ok(window.NordlysNotat); s.onerror = () => feil(new Error('Fikk ikke lastet notatet.'));
+    document.head.append(s);
   });
-  function save(s) { try { sessionStorage.setItem(SKEY, JSON.stringify(s)); } catch {} }
-  function load() { try { const s = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); return s && s.utloper > Date.now() + 30000 ? s : null; } catch { return null; } }
-  function clear() { try { sessionStorage.removeItem(SKEY); } catch {} }
+}
 
-  // Innloggingslenken går tilbake til denne siden med økten i adressens #-del.
-  const HER = location.origin + location.pathname;
-  $('f-epost').addEventListener('submit', async (e) => {
-    e.preventDefault(); err();
-    epost = $('epost').value.trim().toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(epost)) return err('Sjekk e-postadressen.');
-    $('b-epost').disabled = true;
-    try {
-      const r = await auth('otp?redirect_to=' + encodeURIComponent(HER), { email: epost, create_user: true });
-      if (r.status === 429) throw new Error('vent');
-      // samme melding uansett om domenet er godkjent, så siden ikke røper hvem som har tilgang
-      $('f-epost').hidden = true; $('sendt').hidden = false;
-      $('sendt-til').textContent = 'Hvis ' + epost + ' har tilgang, har vi sendt en kode dit. Koden gjelder en kort stund.';
-      $('kode').value = ''; $('kode').focus();
-    } catch (x) { err(x.message === 'vent' ? 'Det er sendt mange koder nå. Vent litt og prøv igjen.' : 'Vi fikk ikke sendt koden. Prøv igjen om litt.'); }
-    $('b-epost').disabled = false;
-  });
-  $('sendt').addEventListener('submit', async (e) => {
-    e.preventDefault(); err();
-    const kode = $('kode').value.replace(/\D/g, '');
-    if (kode.length < 6) return err('Skriv koden fra e-posten.');
-    $('b-kode').disabled = true;
-    try {
-      const r = await auth('verify', { type: 'email', email: epost, token: kode });
-      if (r.status === 429) { err('For mange forsøk. Vent litt og prøv igjen.'); return; }
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d.access_token) { err('Koden stemmer ikke, eller den er utløpt. Sjekk koden eller be om en ny.'); return; }
-      const s = { token: d.access_token, epost: (d.user && d.user.email) || epost, utloper: Date.now() + (Number(d.expires_in) || 3600) * 1000 };
-      save(s);
-      await vis(s);
-    } catch { err('Fikk ikke kontakt. Prøv igjen om litt.'); }
-    finally { $('b-kode').disabled = false; }
-  });
-  $('annen-epost').addEventListener('click', () => { $('sendt').hidden = true; $('f-epost').hidden = false; err(); $('epost').focus(); });
+const AGENDANAVN = { status: 'Status', risiko: 'Risiko', aksjoner: 'Aksjonspunkter', tidslinje: 'Tidslinje' };
+async function agendaFor(mote) {
+  const saker = await hent('sg_saker', 'select=id,tittel&mote_id=eq.' + mote.id);
+  const navn = Object.fromEntries(saker.map((s) => [s.id, s.tittel]));
+  return (mote.agenda || []).map((a) => a.type === 'sak' ? 'Sak: ' + (navn[a.sak_id] || 'sak') : a.type === 'fritt' ? a.tekst : AGENDANAVN[a.type]).filter(Boolean);
+}
 
-  // eldre e-poster med lenke: tilbake fra lenken med #access_token=...&expires_in=... eller #error=...
-  function fraLenke() {
-    if (!location.hash || location.hash.length < 2) return null;
-    const h = new URLSearchParams(location.hash.slice(1));
-    history.replaceState(null, '', HER);
-    if (h.get('error')) { err('Lenken virket ikke. Den kan være utløpt eller brukt før. Be om en ny.'); return null; }
-    const token = h.get('access_token');
-    if (!token) return null;
-    let e = '';
-    try { e = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email || ''; } catch {}
-    const s = { token, epost: e, utloper: Date.now() + (Number(h.get('expires_in')) || 3600) * 1000 };
-    save(s);
-    return s;
+async function visNotat(moteId) {
+  const [mote] = await hent('sg_moter', 'id=eq.' + moteId);
+  if (!mote) throw new Error('Fant ikke møtet.');
+  const N = await lastNotat();
+  const rot = $('innhold');
+  const topp = document.createElement('div'); topp.className = 'sg-notat-topp';
+  const tilbake = Object.assign(document.createElement('a'), { href: '#', textContent: '← Tilbake til siden' });
+  const avslutt = Object.assign(document.createElement('button'), { type: 'button', className: 'btn primary small', textContent: 'Avslutt møtet' });
+  avslutt.addEventListener('click', async () => (await import('./redigering.js')).avsluttMote(moteId));
+  topp.append(tilbake, avslutt);
+  const flate = document.createElement('div');
+  rot.replaceChildren(topp, flate);
+  const s = okt();
+  notat = N.aapneNotat(flate, { moteId, agenda: await agendaFor(mote), tittel: mote.tittel, dato: mote.dato, sb: { url: SB, key: KEY }, token, epost: s.epost, navn: s.navn });
+}
+
+let rutenr = 0;
+async function rute() {
+  const nr = ++rutenr;
+  try { notat?.lukk?.(); } catch {}
+  notat = null;
+  const [, side, id] = /^#(presenter|utskrift|notat)\/([0-9a-f-]{36})$/.exec(location.hash) || [];
+  const redaktor = await erRedaktor();
+  if (nr !== rutenr) return;
+  const presenter = side === 'presenter' || side === 'utskrift';
+  document.body.classList.toggle('sg-presenter', presenter);
+  $('who').hidden = presenter; $('foot').hidden = presenter;
+  $('scene').hidden = !presenter; $('innhold').hidden = presenter;
+  $('toc-wrap').hidden = !!side;
+  if (!presenter) $('scene').replaceChildren();
+  try {
+    if (side === 'presenter') return await (await import('./presentasjon.js')).startPresentasjon($('scene'), id);
+    if (side === 'utskrift') return await (await import('./presentasjon.js')).skrivUt($('scene'), id);
+    if (side === 'notat') { if (!redaktor) { location.hash = ''; return; } return await visNotat(id); }
+    const rot = $('innhold');
+    await (await import('./visning.js')).visSide(rot, { seSomLeser: seSomLeser || !redaktor });
+    if (redaktor && nr === rutenr) (await import('./redigering.js')).monterRedigering(rot);
+  } catch (x) {
+    if (x instanceof TilgangFeil) return loggUt(x.message);
+    console.error(x);
+    $('innhold').hidden = false;
+    const p = document.createElement('p'); p.className = 'err'; p.textContent = x.message || 'Noe gikk galt.';
+    $('innhold').replaceChildren(p);
   }
+}
+window.addEventListener('hashchange', rute);
+// visningen tegner seg selv på nytt ved endringer og sender 'sg:tegnet' når den er ferdig
+window.addEventListener('sg:tegnet', async () => {
+  if (location.hash || !(await erRedaktor())) return;
+  (await import('./redigering.js')).monterRedigering($('innhold'));
+});
 
-  async function vis(s) {
-    const r = await fetch(SB + '/rest/v1/private_innhold?side=eq.styringsgruppe&select=html,oppdatert', {
-      headers: { apikey: KEY, Authorization: 'Bearer ' + s.token },
-    });
-    if (r.status === 401) { clear(); throw new Error('utlopt'); }
-    const rows = r.ok ? await r.json() : [];
-    if (!rows.length) {
-      $('login').hidden = false; $('sendt').hidden = true; $('f-epost').hidden = false;
-      err('Du er logget inn, men har ikke tilgang til denne siden. Ta kontakt med prosjektledelsen.');
-      await logout(true);
-      return;
-    }
-    $('innhold').innerHTML = rows[0].html;   // eget innhold, lastet opp av prosjektet
-    $('oppdatert').textContent = 'Sist oppdatert ' + new Date(rows[0].oppdatert).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' }) + '.';
-    $('who-email').textContent = s.epost || '';
-    $('login').hidden = true; $('innhold').hidden = false; $('who').hidden = false; $('toc-wrap').hidden = false; $('foot').hidden = false;
-  }
+async function start() {
+  const s = okt();
+  if (!s) return visInnlogging();
+  try { await token(); } catch { return visInnlogging(); }
+  $('login').hidden = true; $('who').hidden = false; $('foot').hidden = false;
+  $('who-email').textContent = s.epost || '';
+  await rute();
+}
 
-  async function logout(keepMessage) {
-    const s = load();
-    clear();
-    if (s) { try { await auth('logout', null, s.token); } catch {} }
-    $('innhold').innerHTML = ''; $('innhold').hidden = true; $('who').hidden = true; $('toc-wrap').hidden = true; $('foot').hidden = true;
-    $('login').hidden = false; $('sendt').hidden = true; $('f-epost').hidden = false;
-    if (!keepMessage) err();
-  }
-  $('logout').addEventListener('click', () => logout());
-
-  const s = fraLenke() || load();
-  if (s) vis(s).catch(() => logout());
+// eldre e-poster med lenke: tilbake med #access_token=... eller #error=...
+(function fraLenke() {
+  if (!location.hash.includes('access_token=') && !location.hash.includes('error=')) return;
+  const h = new URLSearchParams(location.hash.slice(1));
+  history.replaceState(null, '', location.pathname);
+  if (h.get('error')) return err('Lenken virket ikke. Den kan være utløpt eller brukt før. Be om en ny kode.');
+  const tok = h.get('access_token');
+  let e = '';
+  try { e = JSON.parse(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email || ''; } catch {}
+  lagreOkt({ token: tok, refresh: h.get('refresh_token'), epost: e, utloper: Date.now() + (Number(h.get('expires_in')) || 3600) * 1000 });
 })();
+start();
 </script>
 </body>
 </html>
